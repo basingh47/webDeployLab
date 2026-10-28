@@ -1,0 +1,9 @@
+services:
+  web:
+    image: nginx:1.27-alpine            # ready-made web server, no Dockerfile needed
+    container_name: web-deploy-lab
+    ports:
+      - "80:80"                         # normal website port → no :8001 in the URL
+    volumes:
+      - ./html:/usr/share/nginx/html    # Nginx serves files from here
+    restart: always                     # auto-start after VM reboot or crash

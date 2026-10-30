@@ -1,9 +1,20 @@
 services:
-  web:
-    image: nginx:1.27-alpine            # ready-made web server, no Dockerfile needed
-    container_name: web-deploy-lab
-    ports:
-      - "80:80"                         # normal website port → no :8001 in the URL
+  app:
+    build: ./docker/php                 # PHP-FPM runs Laravel
+    container_name: laravel-app
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"   # same user as the folder owner → storage/ is writable
     volumes:
-      - ./html:/usr/share/nginx/html    # Nginx serves files from here
-    restart: always                     # auto-start after VM reboot or crash
+      - ./:/var/www/html                # project code shared from the host
+    restart: always
+
+  web:
+    image: nginx:1.27-alpine            # web server, sends PHP requests to app
+    container_name: laravel-web
+    ports:
+      - "${APP_PORT:-80}:80"            # 80 on the server; set APP_PORT=8000 in .env if 80 is busy
+    volumes:
+      - ./:/var/www/html:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+    restart: always

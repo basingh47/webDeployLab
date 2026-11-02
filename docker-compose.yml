@@ -5,6 +5,9 @@ services:
     user: "${HOST_UID:-1000}:${HOST_GID:-1000}"   # same user as the folder owner → storage/ is writable
     volumes:
       - ./:/var/www/html                # project code shared from the host
+    depends_on:
+      mysql:
+        condition: service_healthy      # start PHP only after MySQL accepts connections
     restart: always
 
   web:
@@ -18,3 +21,22 @@ services:
     depends_on:
       - app
     restart: always
+
+  mysql:
+    image: mysql:8.4                    # database server; Laravel connects with DB_HOST=mysql
+    container_name: laravel-mysql
+    environment:                        # same values Laravel reads from .env
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - mysql-data:/var/lib/mysql       # named volume: data survives `down`, no host UID issues
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      retries: 10
+    restart: always                     # no ports: only app can reach it, nothing exposed outside
+
+volumes:
+  mysql-data:

@@ -44,4 +44,5 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          script: ~/webDeployLab/docker/deploy.sh
+          # pull first, so the server runs the newest deploy.sh (and has it at all on the first deploy)
+          script: cd ~/webDeployLab && git pull --ff-only && ./docker/deploy.sh

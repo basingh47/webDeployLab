@@ -45,33 +45,7 @@ To run the server steps by hand on the VM: `~/webDeployLab/docker/deploy.sh`. Th
 
 ### One-time setup (so GitHub can log in to the VM)
 
-1. On the PC, make a key just for GitHub (no passphrase):
-
-   ```bash
-   ssh-keygen -t ed25519 -f ~/.ssh/github_deploy -N "" -C github-actions
-   cat ~/.ssh/github_deploy.pub        # public key → goes on the VM
-   cat ~/.ssh/github_deploy            # private key → goes in GitHub
-   ```
-
-2. On the VM, allow that public key:
-
-   ```bash
-   echo "PASTE-THE-.pub-LINE-HERE" >> ~/.ssh/authorized_keys
-   ```
-
-   If login still fails later, add the same `.pub` line in GCP Console → VM → **Edit** → **SSH Keys** instead.
-
-3. Test from the PC: `ssh -i ~/.ssh/github_deploy basingh47@35.238.125.125 'echo ok'`
-
-4. GitHub repo → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**:
-
-   | Name | Value |
-   |---|---|
-   | `SSH_HOST` | `35.238.125.125` |
-   | `SSH_USER` | `basingh47` |
-   | `SSH_KEY` | the whole private key, including the `-----BEGIN` / `-----END` lines |
-
-5. First time only: on the VM, `git pull` once so `docker/deploy.sh` exists there. After that, every push deploys itself.
+Make an SSH key on the VM and save it in GitHub Secrets (`SSH_HOST`, `SSH_USER`, `SSH_KEY`). The steps, an explanation of how the key works, and fixes for errors are in [SSH-KEY.md](SSH-KEY.md).
 
 ### What deploy.sh does (same as by hand)
 

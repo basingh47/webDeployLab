@@ -2,6 +2,8 @@
 
 Learning to deploy websites with Docker, GitHub and Google Cloud — one step at a time.
 
+Commands for the live server: [DEPLOY.md](DEPLOY.md)
+
 ## Stage 2: Laravel with Nginx + PHP-FPM
 
 Two containers:

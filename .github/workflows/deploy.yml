@@ -1,0 +1,47 @@
+# Deploy to the live server on every push to main.
+# 1. GitHub's machine builds the CSS/JS (public/build)
+# 2. copies public/build to the VM
+# 3. SSHes into the VM and runs docker/deploy.sh (git pull, composer, migrate, caches)
+# Needs repo secrets: SSH_HOST, SSH_USER, SSH_KEY (see DEPLOY.md).
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:          # also adds a "Run workflow" button in the Actions tab
+
+concurrency: deploy           # two quick pushes → deploys run one after another, never together
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get the code
+        uses: actions/checkout@v4
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm                  # reuse downloaded packages between runs → faster
+
+      - name: Build CSS/JS
+        run: npm ci && npm run build  # creates public/build; if this fails, nothing below runs
+
+      - name: Copy public/build to the server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          source: public/build
+          target: /home/${{ secrets.SSH_USER }}/webDeployLab/public/build
+          strip_components: 2         # drop the "public/build/" prefix so files don't land in public/build/public/build
+
+      - name: Run deploy script on the server
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: ~/webDeployLab/docker/deploy.sh
